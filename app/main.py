@@ -1,9 +1,11 @@
 from fastapi import FastAPI
-from app.routers import matriz
+from app.routers import matriz, disciplina, oferta
 
 app = FastAPI(title="Geratriz")
 
 app.include_router(matriz.router)
+app.include_router(disciplina.router)
+app.include_router(oferta.router)
 
 
 @app.get("/")
