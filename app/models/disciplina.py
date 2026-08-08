@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -13,5 +13,6 @@ class Disciplina(Base):
     periodo_sugerido = Column(Integer, nullable=False)
     carga = Column(Integer, nullable=False)
     tipo = Column(String, nullable=False)
+    ocupa_grade = Column(Boolean, nullable=False, default=True)
 
     matriz = relationship("Matriz", backref="disciplinas")

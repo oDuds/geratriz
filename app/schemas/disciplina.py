@@ -8,7 +8,7 @@ class DisciplinaBase(BaseModel):
     periodo_sugerido: int
     carga: int
     tipo: str
-
+    ocupa_grade: bool = True
 
 class DisciplinaCreate(DisciplinaBase):
     pass

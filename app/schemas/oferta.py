@@ -6,9 +6,9 @@ class OfertaBase(BaseModel):
     disciplina_id: int
     semestre: str
     professor: str | None = None
-    dia_semana: str
-    horario_inicio: time
-    horario_fim: time
+    dia_semana: str | None = None
+    horario_inicio: time | None = None
+    horario_fim: time | None = None
     vagas: int | None = None
 
 
