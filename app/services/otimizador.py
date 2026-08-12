@@ -139,3 +139,44 @@ def listar_candidatas_com_oferta(db: Session, aluno_id: int, semestre: str, marg
         .all()
     )
     return ofertas
+
+def horarios_conflitam(oferta_a: Oferta, oferta_b: Oferta) -> bool:
+    """Verifica se duas ofertas colidem: mesmo dia e horários sobrepostos."""
+    if oferta_a.dia_semana != oferta_b.dia_semana:
+        return False
+    return oferta_a.horario_inicio < oferta_b.horario_fim and oferta_b.horario_inicio < oferta_a.horario_fim
+
+
+def montar_grade(db: Session, aluno_id: int, semestre: str, margem_periodos: int = 1, max_creditos: int | None = None) -> dict:
+    """Fase 3: monta a grade final sem conflito de horário, usando estratégia gulosa.
+    Prioriza disciplinas de período mais baixo primeiro (DPs e mais atrasadas primeiro)."""
+    candidatas = listar_candidatas_com_oferta(db, aluno_id, semestre, margem_periodos)
+
+    # Separa quem ocupa grade de quem não ocupa (ex: Estágio) - este último sempre entra
+    sem_grade = [o for o in candidatas if not o.disciplina.ocupa_grade]
+    com_grade = [o for o in candidatas if o.disciplina.ocupa_grade]
+
+    # Prioriza por período sugerido (mais baixo primeiro = DPs e disciplinas mais atrasadas)
+    com_grade.sort(key=lambda o: o.disciplina.periodo_sugerido)
+
+    selecionadas: list[Oferta] = []
+    creditos_acumulados = sum(o.disciplina.carga for o in sem_grade)
+
+    for oferta in com_grade:
+        if max_creditos is not None and creditos_acumulados + oferta.disciplina.carga > max_creditos:
+            continue
+
+        tem_conflito = any(horarios_conflitam(oferta, ja_escolhida) for ja_escolhida in selecionadas)
+        if tem_conflito:
+            continue
+
+        selecionadas.append(oferta)
+        creditos_acumulados += oferta.disciplina.carga
+
+    todas_selecionadas = sem_grade + selecionadas
+
+    return {
+        "grade": todas_selecionadas,
+        "total_creditos": creditos_acumulados,
+        "total_disciplinas": len(todas_selecionadas),
+    }
