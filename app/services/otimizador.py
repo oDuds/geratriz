@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.models.oferta import Oferta
 from app.models.matriz import Matriz
 from app.models.disciplina import Disciplina
 from app.models.aluno_disciplina import AlunoDisciplina
@@ -122,3 +123,19 @@ def listar_disciplinas_elegiveis(db: Session, aluno_id: int, margem_periodos: in
             elegiveis.append(disciplina)
 
     return elegiveis
+
+def listar_candidatas_com_oferta(db: Session, aluno_id: int, semestre: str, margem_periodos: int = 1) -> list[Oferta]:
+    """Fase 2: cruza as disciplinas elegíveis com as ofertas do semestre.
+    Disciplinas sem oferta naquele semestre ficam de fora, mesmo que elegíveis."""
+    elegiveis = listar_disciplinas_elegiveis(db, aluno_id, margem_periodos)
+    ids_elegiveis = [d.id for d in elegiveis]
+
+    if not ids_elegiveis:
+        return []
+
+    ofertas = (
+        db.query(Oferta)
+        .filter(Oferta.disciplina_id.in_(ids_elegiveis), Oferta.semestre == semestre)
+        .all()
+    )
+    return ofertas
