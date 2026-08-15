@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from jose import jwt
 import os
+from jose import JWTError
 
 SECRET_KEY = os.getenv("SECRET_KEY", "chave-temporaria-trocar-depois")
 ALGORITHM = "HS256"
@@ -23,3 +24,13 @@ def criar_token(dados: dict) -> str:
     expira_em = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     dados_copia.update({"exp": expira_em})
     return jwt.encode(dados_copia, SECRET_KEY, algorithm=ALGORITHM)
+
+
+
+def obter_aluno_id_do_token(token: str) -> int | None:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        aluno_id = payload.get("sub")
+        return int(aluno_id) if aluno_id else None
+    except JWTError:
+        return None
