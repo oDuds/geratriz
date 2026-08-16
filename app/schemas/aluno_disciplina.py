@@ -16,3 +16,6 @@ class AlunoDisciplinaResponse(AlunoDisciplinaBase):
 
     class Config:
         from_attributes = True
+
+class AlunoDisciplinaLote(BaseModel):
+    itens: list[AlunoDisciplinaBase]

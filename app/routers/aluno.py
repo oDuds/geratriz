@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from fastapi import Header
+from app.security import obter_aluno_id_do_token
 
 from app.database import get_db
 from app.models.aluno import Aluno
@@ -36,3 +38,22 @@ def login(dados: LoginRequest, db: Session = Depends(get_db)):
 
     token = criar_token({"sub": str(aluno.id)})
     return {"access_token": token, "token_type": "bearer"}
+
+
+
+@router.get("/me", response_model=AlunoResponse)
+def meus_dados(authorization: str = Header(None), db: Session = Depends(get_db)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token não fornecido")
+
+    token = authorization.replace("Bearer ", "")
+    aluno_id = obter_aluno_id_do_token(token)
+
+    if aluno_id is None:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    aluno = db.query(Aluno).filter(Aluno.id == aluno_id).first()
+    if not aluno:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+
+    return aluno
