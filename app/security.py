@@ -3,6 +3,8 @@ from passlib.context import CryptContext
 from jose import jwt
 import os
 from jose import JWTError
+from fastapi import Header, HTTPException
+
 
 SECRET_KEY = os.getenv("SECRET_KEY", "chave-temporaria-trocar-depois")
 ALGORITHM = "HS256"
@@ -34,3 +36,16 @@ def obter_aluno_id_do_token(token: str) -> int | None:
         return int(aluno_id) if aluno_id else None
     except JWTError:
         return None
+
+
+def exigir_aluno_logado(authorization: str = Header(None)) -> int:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token não fornecido")
+
+    token = authorization.replace("Bearer ", "")
+    aluno_id = obter_aluno_id_do_token(token)
+
+    if aluno_id is None:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+    return aluno_id

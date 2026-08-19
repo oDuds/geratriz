@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from app.database import get_db
 from app.models.disciplina import Disciplina
 from app.schemas.disciplina import DisciplinaCreate, DisciplinaResponse
+from app.security import exigir_aluno_logado
 
 router = APIRouter(prefix="/disciplinas", tags=["Disciplinas"])
 
 
 @router.post("/", response_model=DisciplinaResponse)
-def criar_disciplina(disciplina: DisciplinaCreate, db: Session = Depends(get_db)):
+def criar_disciplina(disciplina: DisciplinaCreate, db: Session = Depends(get_db), aluno_id: int = Depends(exigir_aluno_logado)):
     nova_disciplina = Disciplina(**disciplina.model_dump())
     db.add(nova_disciplina)
     db.commit()

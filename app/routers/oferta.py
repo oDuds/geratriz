@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from app.database import get_db
 from app.models.oferta import Oferta
 from app.schemas.oferta import OfertaCreate, OfertaResponse
+from app.security import exigir_aluno_logado
 
 router = APIRouter(prefix="/ofertas", tags=["Ofertas"])
 
 
 @router.post("/", response_model=OfertaResponse)
-def criar_oferta(oferta: OfertaCreate, db: Session = Depends(get_db)):
+def criar_oferta(oferta: OfertaCreate, db: Session = Depends(get_db), aluno_id: int = Depends(exigir_aluno_logado)):
     nova_oferta = Oferta(**oferta.model_dump())
     db.add(nova_oferta)
     db.commit()

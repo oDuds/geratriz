@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from app.security import exigir_aluno_logado
 from app.database import get_db
 from app.models.matriz import Matriz
 from app.schemas.matriz import MatrizCreate, MatrizResponse
@@ -9,7 +9,7 @@ router = APIRouter(prefix="/matrizes", tags=["Matrizes"])
 
 
 @router.post("/", response_model=MatrizResponse)
-def criar_matriz(matriz: MatrizCreate, db: Session = Depends(get_db)):
+def criar_matriz(matriz: MatrizCreate, db: Session = Depends(get_db), aluno_id: int = Depends(exigir_aluno_logado)):
     nova_matriz = Matriz(**matriz.model_dump())
     db.add(nova_matriz)
     db.commit()

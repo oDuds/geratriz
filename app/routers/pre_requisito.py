@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from app.database import get_db
 from app.models.pre_requisito import PreRequisito
 from app.schemas.pre_requisito import PreRequisitoCreate, PreRequisitoResponse
+from app.security import exigir_aluno_logado
 
 router = APIRouter(prefix="/pre-requisitos", tags=["Pré-requisitos"])
 
 
 @router.post("/", response_model=PreRequisitoResponse)
-def criar_pre_requisito(pre_requisito: PreRequisitoCreate, db: Session = Depends(get_db)):
+def criar_pre_requisito(pre_requisito: PreRequisitoCreate, db: Session = Depends(get_db), aluno_id: int = Depends(exigir_aluno_logado)):
     if pre_requisito.tipo == "direto" and not pre_requisito.disciplina_requisito_id:
         raise HTTPException(
             status_code=400,
