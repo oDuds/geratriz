@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.models.oferta import Oferta
 from app.schemas.oferta import OfertaCreate, OfertaResponse
@@ -37,3 +38,36 @@ def buscar_oferta(oferta_id: int, db: Session = Depends(get_db)):
     if not oferta:
         raise HTTPException(status_code=404, detail="Oferta não encontrada")
     return oferta
+
+
+@router.put("/{oferta_id}", response_model=OfertaResponse)
+def atualizar_oferta(
+    oferta_id: int,
+    dados: OfertaCreate,
+    db: Session = Depends(get_db),
+    aluno_id: int = Depends(exigir_aluno_logado),
+):
+    oferta = db.query(Oferta).filter(Oferta.id == oferta_id).first()
+    if not oferta:
+        raise HTTPException(status_code=404, detail="Oferta não encontrada")
+
+    for campo, valor in dados.model_dump().items():
+        setattr(oferta, campo, valor)
+
+    db.commit()
+    db.refresh(oferta)
+    return oferta
+
+
+@router.delete("/{oferta_id}", status_code=204)
+def deletar_oferta(
+    oferta_id: int,
+    db: Session = Depends(get_db),
+    aluno_id: int = Depends(exigir_aluno_logado),
+):
+    oferta = db.query(Oferta).filter(Oferta.id == oferta_id).first()
+    if not oferta:
+        raise HTTPException(status_code=404, detail="Oferta não encontrada")
+
+    db.delete(oferta)
+    db.commit()

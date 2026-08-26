@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.models.pre_requisito import PreRequisito
 from app.schemas.pre_requisito import PreRequisitoCreate, PreRequisitoResponse
@@ -9,7 +10,11 @@ router = APIRouter(prefix="/pre-requisitos", tags=["Pré-requisitos"])
 
 
 @router.post("/", response_model=PreRequisitoResponse)
-def criar_pre_requisito(pre_requisito: PreRequisitoCreate, db: Session = Depends(get_db), aluno_id: int = Depends(exigir_aluno_logado)):
+def criar_pre_requisito(
+    pre_requisito: PreRequisitoCreate,
+    db: Session = Depends(get_db),
+    aluno_id: int = Depends(exigir_aluno_logado),
+):
     if pre_requisito.tipo == "direto" and not pre_requisito.disciplina_requisito_id:
         raise HTTPException(
             status_code=400,
@@ -42,3 +47,36 @@ def buscar_pre_requisito(pre_requisito_id: int, db: Session = Depends(get_db)):
     if not pre_requisito:
         raise HTTPException(status_code=404, detail="Pré-requisito não encontrado")
     return pre_requisito
+
+
+@router.put("/{pre_requisito_id}", response_model=PreRequisitoResponse)
+def atualizar_pre_requisito(
+    pre_requisito_id: int,
+    dados: PreRequisitoCreate,
+    db: Session = Depends(get_db),
+    aluno_id: int = Depends(exigir_aluno_logado),
+):
+    pre_requisito = db.query(PreRequisito).filter(PreRequisito.id == pre_requisito_id).first()
+    if not pre_requisito:
+        raise HTTPException(status_code=404, detail="Pré-requisito não encontrado")
+
+    for campo, valor in dados.model_dump().items():
+        setattr(pre_requisito, campo, valor)
+
+    db.commit()
+    db.refresh(pre_requisito)
+    return pre_requisito
+
+
+@router.delete("/{pre_requisito_id}", status_code=204)
+def deletar_pre_requisito(
+    pre_requisito_id: int,
+    db: Session = Depends(get_db),
+    aluno_id: int = Depends(exigir_aluno_logado),
+):
+    pre_requisito = db.query(PreRequisito).filter(PreRequisito.id == pre_requisito_id).first()
+    if not pre_requisito:
+        raise HTTPException(status_code=404, detail="Pré-requisito não encontrado")
+
+    db.delete(pre_requisito)
+    db.commit()
