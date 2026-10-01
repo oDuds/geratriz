@@ -79,3 +79,21 @@ def registrar_status_em_lote(
         db.refresh(r)
 
     return resultados
+
+@router.delete("/{disciplina_id}", status_code=204)
+def remover_status(
+    disciplina_id: int,
+    db: Session = Depends(get_db),
+    aluno_id_logado: int = Depends(exigir_aluno_logado),
+):
+    registro = (
+        db.query(AlunoDisciplina)
+        .filter(
+            AlunoDisciplina.aluno_id == aluno_id_logado,
+            AlunoDisciplina.disciplina_id == disciplina_id,
+        )
+        .first()
+    )
+    if registro:
+        db.delete(registro)
+        db.commit()
